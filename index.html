@@ -1,0 +1,174 @@
+
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Fhmii Store Keperluan Digital & Keperluan Lambungmu</title>
+<meta name="description" content="Fhmii Store: produk digital premium & makanan pilihan. Pesan langsung lewat WhatsApp, tanpa ribet." />
+
+<link rel="stylesheet" href="css/style.css" />
+<script>
+  (function () {
+    var saved = localStorage.getItem("fhmii-theme");
+    var theme = saved || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    document.documentElement.setAttribute("data-theme", theme);
+  })();
+</script>
+</head>
+<body>
+
+<header class="navbar">
+  <div class="wrap navbar-inner">
+    <a href="/" class="brand">
+      <img src="assets/media/fhmii.png" alt="Fhmii Store" class="brand-logo"
+           onerror="this.replaceWith(Object.assign(document.createElement('div'), {className:'brand-logo-fallback', textContent:'F'}))" />
+      <span class="brand-name">Fhmii Store</span>
+    </a>
+
+    <nav class="nav-links">
+      <a href="/produk">Produk</a>
+      <a href="/produk?type=digital">Digital</a>
+      <a href="/produk?type=food">Makanan</a>
+      <a href="#kontak">Kontak</a>
+    </nav>
+
+    <div class="nav-actions">
+      <button data-theme-toggle class="icon-btn" aria-label="Ganti tema" aria-pressed="false">
+        <svg class="dark-icon" style="display:none" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1.5M12 19.5V21M4.6 4.6l1.1 1.1M18.3 18.3l1.1 1.1M3 12h1.5M19.5 12H21M4.6 19.4l1.1-1.1M18.3 5.7l1.1-1.1M16.5 12a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0Z"/></svg>
+        <svg class="light-icon" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg>
+      </button>
+
+      <div class="hamburger-wrap">
+        <button id="menuBtn" class="icon-btn hamburger" aria-label="Buka menu" aria-expanded="false">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div id="mobileMenu" class="mobile-menu">
+    <a href="/produk">Semua Produk</a>
+    <a href="/produk?type=digital">Produk Digital</a>
+    <a href="/produk?type=food">Menu Makanan</a>
+    <a href="#kontak">Kontak</a>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="hero-blob"></div>
+  <div class="wrap hero-inner">
+    <div class="hero-content reveal">
+      <span class="eyebrow">Toko digital & nyata</span>
+      <h1 class="hero-title">Dua dunia belanja,<br />satu pintu masuk.</h1>
+      <p class="hero-subtitle">
+        Website yang menyediakan keperluan digitalmu seperti layanan aplikasi premium & kebutuhan lambungmu, menjual beberapa makanan yang siap makan tanpa perlu kamu bergerak.
+      </p>
+      <div class="hero-actions">
+        <a href="/produk" class="btn-primary">Jelajahi Produk</a>
+        <a href="#kategori" class="btn-ghost">Lihat Kategori</a>
+      </div>
+    </div>
+
+    <div id="kategori" class="portal-grid reveal">
+      <a href="/produk?type=digital" class="portal-pill">
+        <div>
+          <p class="portal-label">Online</p>
+          <p class="portal-title">Produk Digital</p>
+          <p class="portal-desc">Aplikasi premium, langsung aktif</p>
+        </div>
+        <svg class="portal-arrow" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+      </a>
+
+      <a href="/produk?type=food" class="portal-pill">
+        <div>
+          <p class="portal-label">Offline</p>
+          <p class="portal-title">Menu Makanan</p>
+          <p class="portal-desc">Pesan sekarang, ambil di tempat</p>
+        </div>
+        <svg class="portal-arrow" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+      </a>
+    </div>
+  </div>
+</section>
+
+<section class="section wrap">
+  <div class="section-header reveal">
+    <div>
+      <p class="section-eyebrow">Pilihan minggu ini</p>
+      <h2 class="section-title">Produk Pilihan</h2>
+    </div>
+    <a href="/produk" class="section-link">Lihat semua →</a>
+  </div>
+
+  <div id="featured-products-grid" class="product-grid"></div>
+</section>
+
+<section class="trust">
+  <div class="wrap trust-grid reveal">
+    <div>
+      <p class="trust-number">100%</p>
+      <p class="trust-label">Pesan tanpa akun</p>
+    </div>
+    <div>
+      <p class="trust-number">2</p>
+      <p class="trust-label">Kategori: digital & makanan</p>
+    </div>
+    <div>
+      <p class="trust-number">1x</p>
+      <p class="trust-label">Klik ke WhatsApp</p>
+    </div>
+  </div>
+</section>
+
+<footer id="kontak" class="footer wrap">
+  <div class="footer-top">
+    <div class="brand">
+      <img src="assets/media/fhmii.png" alt="Fhmii Store" class="brand-logo"
+           onerror="this.replaceWith(Object.assign(document.createElement('div'), {className:'brand-logo-fallback', textContent:'F'}))" />
+      <span class="brand-name">Fhmii Store</span>
+    </div>
+  </div>
+
+  <p class="footer-copyright">© 2026 Fhmii Store. Semua transaksi diproses langsung lewat WhatsApp.</p>
+</footer>
+
+<!-- Firebase compat SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+
+<script src="js/firebase-config.js"></script>
+<script src="js/site-config.js"></script>
+<script src="js/products.js"></script>
+<script src="js/theme.js"></script>
+<script>
+  // ---- UI logic (jalan duluan, gak tergantung Firestore) ----
+  function syncIcons() {
+    const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+    document.querySelectorAll(".dark-icon").forEach(el => el.style.display = isDark ? "block" : "none");
+    document.querySelectorAll(".light-icon").forEach(el => el.style.display = isDark ? "none" : "block");
+  }
+  syncIcons();
+  document.querySelectorAll("[data-theme-toggle]").forEach(btn => btn.addEventListener("click", () => setTimeout(syncIcons, 0)));
+
+  const menuBtn = document.getElementById("menuBtn");
+  const mobileMenu = document.getElementById("mobileMenu");
+  if (menuBtn && mobileMenu) {
+    menuBtn.addEventListener("click", () => {
+      const isOpen = menuBtn.classList.toggle("is-open");
+      menuBtn.setAttribute("aria-expanded", isOpen);
+      mobileMenu.classList.toggle("is-open");
+    });
+  }
+
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add("is-visible"); io.unobserve(e.target); } });
+  }, { threshold: 0.1 });
+  document.querySelectorAll(".reveal").forEach(el => io.observe(el));
+
+  // ---- Data dari Firestore (dibungkus try/catch biar gak nge-crash UI kalau gagal) ----
+  try { renderFeaturedProducts("featured-products-grid", 8); } catch (e) { console.error(e); }
+  try { hydrateWaLinks(); } catch (e) { console.error(e); }
+</script>
+</body>
+</html>

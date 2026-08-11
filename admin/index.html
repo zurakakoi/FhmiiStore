@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Dashboard — Admin Fhmii Store</title>
+<link rel="stylesheet" href="../css/style.css" />
+<script>
+  (function () {
+    var saved = localStorage.getItem("fhmii-theme");
+    var theme = saved || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    document.documentElement.setAttribute("data-theme", theme);
+  })();
+</script>
+</head>
+<body>
+<div class="admin-shell" id="adminShell" style="display:none;">
+  <header class="admin-header wrap">
+    <a href="/" class="brand">
+      <img src="../assets/media/fhmii.png" alt="Fhmii Store" class="brand-logo"
+           onerror="this.replaceWith(Object.assign(document.createElement('div'), {className:'brand-logo-fallback', textContent:'F'}))" />
+      <span class="brand-name">Fhmii Store <span class="muted" style="font-weight:400;">· Admin</span></span>
+    </a>
+    <div style="display:flex; gap:8px; align-items:center;">
+      <button data-theme-toggle class="icon-btn" aria-label="Ganti tema">
+        <svg class="dark-icon" style="display:none" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1.5M12 19.5V21M4.6 4.6l1.1 1.1M18.3 18.3l1.1 1.1M3 12h1.5M19.5 12H21M4.6 19.4l1.1-1.1M18.3 5.7l1.1-1.1M16.5 12a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0Z"/></svg>
+        <svg class="light-icon" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg>
+      </button>
+      <button class="btn-ghost" id="logoutBtn" style="font-size:13px;padding:8px 16px;">Keluar</button>
+    </div>
+  </header>
+
+  <main class="admin-main wrap">
+    <h1 class="page-title" style="font-size:24px;">Dashboard</h1>
+    <p class="page-subtitle" style="margin-bottom:8px;">Ringkasan toko kamu.</p>
+    <nav style="display:flex;gap:16px;margin-bottom:24px;">
+      <a href="produk" style="color:var(--accent);font-size:13px;font-weight:500;">Kelola Produk</a>
+      <a href="pesanan" style="color:var(--accent);font-size:13px;font-weight:500;">Kelola Pesanan</a>
+      <a href="pengaturan" style="color:var(--accent);font-size:13px;font-weight:500;">Pengaturan Toko</a>
+    </nav>
+
+    <div class="stat-cards" id="statCards">
+      <div class="stat-card"><p class="value">-</p><p class="label">Pesanan Pending</p></div>
+      <div class="stat-card"><p class="value">-</p><p class="label">Pesanan Selesai</p></div>
+      <div class="stat-card"><p class="value">-</p><p class="label">Total Omzet</p></div>
+      <div class="stat-card"><p class="value">-</p><p class="label">Bulan Ini</p></div>
+    </div>
+
+    <div class="admin-card">
+      <h2>Grafik Penjualan (6 Bulan Terakhir)</h2>
+      <div id="salesChart"></div>
+    </div>
+  </main>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+<script src="../js/firebase-config.js"></script>
+<script src="../js/auth.js"></script>
+<script src="../js/admin-orders.js"></script>
+<script src="../js/charts.js"></script>
+<script src="../js/theme.js"></script>
+<script>
+  function syncIcons() {
+    const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+    document.querySelectorAll(".dark-icon").forEach(el => el.style.display = isDark ? "block" : "none");
+    document.querySelectorAll(".light-icon").forEach(el => el.style.display = isDark ? "none" : "block");
+  }
+  syncIcons();
+  document.querySelectorAll("[data-theme-toggle]").forEach(btn => btn.addEventListener("click", () => setTimeout(syncIcons, 0)));
+  document.getElementById("logoutBtn").addEventListener("click", logoutAdmin);
+
+  function formatRupiahShort(n) {
+    if (n >= 1000000) return `Rp${(n / 1000000).toFixed(1)}Jt`;
+    if (n >= 1000) return `Rp${(n / 1000).toFixed(0)}Rb`;
+    return `Rp${n}`;
+  }
+
+  async function loadDashboard() {
+    const [stats, monthly] = await Promise.all([getOrderStats(), getMonthlySales()]);
+
+    const monthKey = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, "0")}`;
+    const thisMonthRevenue = monthly[monthKey] || 0;
+
+    const cards = document.querySelectorAll("#statCards .stat-card");
+    cards[0].querySelector(".value").textContent = stats.pendingCount;
+    cards[1].querySelector(".value").textContent = stats.doneCount;
+    cards[2].querySelector(".value").textContent = formatRupiahShort(stats.totalRevenue);
+    cards[3].querySelector(".value").textContent = formatRupiahShort(thisMonthRevenue);
+
+    renderSalesChart("salesChart", monthly);
+  }
+
+  (async function init() {
+    const allowed = await guardAdminPage();
+    if (!allowed) return;
+    document.getElementById("adminShell").style.display = "block";
+    loadDashboard();
+  })();
+</script>
+</body>
+</html>

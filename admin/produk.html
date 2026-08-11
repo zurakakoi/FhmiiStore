@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Kelola Produk — Admin Fhmii Store</title>
+<link rel="stylesheet" href="../css/style.css" />
+<script>
+  (function () {
+    var saved = localStorage.getItem("fhmii-theme");
+    var theme = saved || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    document.documentElement.setAttribute("data-theme", theme);
+  })();
+</script>
+</head>
+<body>
+<div class="admin-shell" id="adminShell" style="display:none;">
+  <header class="admin-header wrap">
+    <a href="/" class="brand">
+      <img src="../assets/media/fhmii.png" alt="Fhmii Store" class="brand-logo"
+           onerror="this.replaceWith(Object.assign(document.createElement('div'), {className:'brand-logo-fallback', textContent:'F'}))" />
+      <span class="brand-name">Fhmii Store <span class="muted" style="font-weight:400;">· Admin</span></span>
+    </a>
+    <div style="display:flex; gap:8px; align-items:center;">
+      <button data-theme-toggle class="icon-btn" aria-label="Ganti tema">
+        <svg class="dark-icon" style="display:none" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1.5M12 19.5V21M4.6 4.6l1.1 1.1M18.3 18.3l1.1 1.1M3 12h1.5M19.5 12H21M4.6 19.4l1.1-1.1M18.3 5.7l1.1-1.1M16.5 12a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0Z"/></svg>
+        <svg class="light-icon" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg>
+      </button>
+      <button class="btn-ghost" id="logoutBtn" style="font-size:13px;padding:8px 16px;">Keluar</button>
+    </div>
+  </header>
+
+  <main class="admin-main wrap">
+    <h1 class="page-title" style="font-size:24px;">Kelola Produk</h1>
+    <p class="page-subtitle" style="margin-bottom:8px;">Tambah produk baru atau hapus produk yang ada.</p>
+    <nav style="margin-bottom:24px;"><a href="/admin" style="color:var(--accent);font-size:13px;font-weight:500;">Dashboard</a> · <a href="pesanan" style="color:var(--accent);font-size:13px;font-weight:500;">Pesanan</a> · <a href="pengaturan" style="color:var(--accent);font-size:13px;font-weight:500;">Pengaturan</a></nav>
+
+    <div class="admin-grid">
+      <div class="admin-card">
+        <h2>Pengaturan GitHub</h2>
+        <div class="field">
+          <label for="githubToken">Personal Access Token</label>
+          <input type="password" id="githubToken" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" autocomplete="off" />
+          <p class="muted" style="font-size:12px;margin-top:6px;">
+            Dibutuhkan buat upload gambar ke repo <span class="font-mono">zurakakoi/Fhmii-Store</span>.
+            Token disimpan cuma di HP kamu (localStorage), otomatis kesave tiap diubah.
+            Buat di GitHub → Settings → Developer settings → Personal access tokens (scope: <span class="font-mono">repo</span> / <span class="font-mono">contents: write</span>).
+          </p>
+          <p class="form-error" id="tokenStatus" style="color:#22c55e;"></p>
+        </div>
+      </div>
+
+      <div class="admin-card">
+        <h2 id="formTitle">Tambah Produk</h2>
+        <form id="productForm">
+          <div class="field">
+            <label for="name">Nama Produk</label>
+            <input type="text" id="name" placeholder="Contoh: Canva Pro 1 Bulan" required />
+          </div>
+          <div class="field">
+            <label for="type">Tipe</label>
+            <select id="type" required>
+              <option value="digital">Digital (App Premium)</option>
+              <option value="food">Food (Makanan)</option>
+            </select>
+          </div>
+
+          <!-- Harga tunggal, buat produk food -->
+          <div class="field" id="priceFieldWrap">
+            <label for="price">Harga (Rp)</label>
+            <input type="number" id="price" min="0" placeholder="15000" />
+          </div>
+
+          <!-- Varian durasi, buat produk digital -->
+          <div class="field" id="variantFieldWrap" style="display:none;">
+            <label>Varian Durasi & Harga</label>
+            <div id="variantList" class="variant-list"></div>
+            <button type="button" id="addVariantBtn" class="variant-add">+ Tambah Varian</button>
+          </div>
+          <div class="field">
+            <label for="desc">Deskripsi Singkat</label>
+            <textarea id="desc" placeholder="Deskripsi produk, maks 1-2 kalimat"></textarea>
+          </div>
+          <div class="field">
+            <label for="imageFile">Gambar Produk</label>
+            <input type="file" id="imageFile" accept="image/*" />
+            <p class="muted" id="uploadStatus" style="font-size:12px;margin-top:6px;">Pilih gambar dari galeri, otomatis ke-upload ke GitHub.</p>
+            <img id="imagePreview" style="display:none;margin-top:10px;width:100%;max-width:160px;border-radius:10px;object-fit:cover;aspect-ratio:4/5;" />
+            <input type="hidden" id="imageUrl" />
+          </div>
+          <p class="form-error" id="formError"></p>
+          <button type="submit" class="btn-primary btn-block" id="submitBtn">Tambah Produk</button>
+          <button type="button" class="btn-ghost btn-block" id="cancelEditBtn" style="display:none;margin-top:8px;">Batal Edit</button>
+        </form>
+      </div>
+
+      <div class="admin-card">
+        <h2>Semua Produk</h2>
+        <div id="adminProductList" class="admin-list"></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+<script src="../js/firebase-config.js"></script>
+<script src="../js/auth.js"></script>
+<script src="../js/admin-products.js"></script>
+<script src="../js/github-upload.js"></script>
+<script src="../js/theme.js"></script>
+<script>
+  function syncIcons() {
+    const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+    document.querySelectorAll(".dark-icon").forEach(el => el.style.display = isDark ? "block" : "none");
+    document.querySelectorAll(".light-icon").forEach(el => el.style.display = isDark ? "none" : "block");
+  }
+  syncIcons();
+  document.querySelectorAll("[data-theme-toggle]").forEach(btn => btn.addEventListener("click", () => setTimeout(syncIcons, 0)));
+
+  // ---- Toggle field harga vs varian durasi sesuai tipe produk ----
+  const typeSelect = document.getElementById("type");
+  const priceFieldWrap = document.getElementById("priceFieldWrap");
+  const variantFieldWrap = document.getElementById("variantFieldWrap");
+  const variantList = document.getElementById("variantList");
+  const priceInput = document.getElementById("price");
+
+  function variantRow(label = "", price = "") {
+    const row = document.createElement("div");
+    row.className = "variant-row";
+    row.innerHTML = `
+      <input type="text" class="variant-label" placeholder="Contoh: 1 Bulan" value="${label}" />
+      <input type="number" class="variant-price" min="0" placeholder="Harga" value="${price}" />
+      <button type="button" class="variant-remove" aria-label="Hapus varian"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg></button>
+    `;
+    row.querySelector(".variant-remove").addEventListener("click", () => {
+      if (variantList.children.length > 1) row.remove();
+    });
+    return row;
+  }
+
+  document.getElementById("addVariantBtn").addEventListener("click", () => {
+    variantList.appendChild(variantRow());
+  });
+
+  function toggleTypeFields() {
+    const isDigital = typeSelect.value === "digital";
+    variantFieldWrap.style.display = isDigital ? "block" : "none";
+    priceFieldWrap.style.display = isDigital ? "none" : "block";
+    priceInput.required = !isDigital;
+    if (isDigital && variantList.children.length === 0) {
+      variantList.appendChild(variantRow("1 Bulan", ""));
+    }
+  }
+  typeSelect.addEventListener("change", toggleTypeFields);
+  toggleTypeFields();
+
+  function collectVariants() {
+    const rows = [...variantList.querySelectorAll(".variant-row")];
+    return rows
+      .map((row) => ({
+        label: row.querySelector(".variant-label").value.trim(),
+        price: Number(row.querySelector(".variant-price").value) || 0,
+      }))
+      .filter((v) => v.label && v.price > 0);
+  }
+
+  document.getElementById("logoutBtn").addEventListener("click", logoutAdmin);
+
+  // ---- Token GitHub: auto-load & auto-save ----
+  const tokenInput = document.getElementById("githubToken");
+  const tokenStatus = document.getElementById("tokenStatus");
+  tokenInput.value = getGithubToken();
+  if (tokenInput.value) tokenStatus.textContent = "Token tersimpan.";
+
+  tokenInput.addEventListener("change", () => {
+    saveGithubToken(tokenInput.value);
+    tokenStatus.textContent = tokenInput.value ? "Token tersimpan." : "";
+  });
+
+  // ---- Upload gambar otomatis pas file dipilih ----
+  const imageFileInput = document.getElementById("imageFile");
+  const imageUrlHidden = document.getElementById("imageUrl");
+  const imagePreview = document.getElementById("imagePreview");
+  const uploadStatus = document.getElementById("uploadStatus");
+  const productSubmitBtn = document.getElementById("submitBtn");
+
+  imageFileInput.addEventListener("change", async () => {
+    const file = imageFileInput.files[0];
+    if (!file) return;
+
+    uploadStatus.textContent = "Mengupload gambar ke GitHub...";
+    productSubmitBtn.disabled = true;
+    imageUrlHidden.value = "";
+
+    try {
+      const url = await uploadImageToGithub(file);
+      imageUrlHidden.value = url;
+      imagePreview.src = url;
+      imagePreview.style.display = "block";
+      uploadStatus.textContent = "Gambar berhasil diupload.";
+    } catch (err) {
+      uploadStatus.textContent = err.message;
+    } finally {
+      productSubmitBtn.disabled = false;
+    }
+  });
+
+  (async function init() {
+    const allowed = await guardAdminPage();
+    if (!allowed) return;
+    document.getElementById("adminShell").style.display = "block";
+    renderAdminProductList("adminProductList");
+  })();
+
+  const form = document.getElementById("productForm");
+  const errorEl = document.getElementById("formError");
+  const submitBtn = document.getElementById("submitBtn");
+
+  // ---- Mode edit ----
+  const formTitle = document.getElementById("formTitle");
+  const cancelEditBtn = document.getElementById("cancelEditBtn");
+  let editingId = null;
+
+  function enterEditMode(product) {
+    editingId = product.id;
+    formTitle.textContent = "Edit Produk";
+    submitBtn.textContent = "Simpan Perubahan";
+    cancelEditBtn.style.display = "block";
+
+    document.getElementById("name").value = product.name || "";
+    typeSelect.value = product.type || "digital";
+    toggleTypeFields();
+
+    if (product.type === "digital") {
+      variantList.innerHTML = "";
+      (product.variants && product.variants.length > 0 ? product.variants : [{ label: "", price: "" }]).forEach((v) => {
+        variantList.appendChild(variantRow(v.label, v.price));
+      });
+    } else {
+      priceInput.value = product.price || "";
+    }
+
+    document.getElementById("desc").value = product.desc || "";
+    const currentImg = (product.images && product.images[0]) || "";
+    imageUrlHidden.value = currentImg;
+    if (currentImg) {
+      imagePreview.src = currentImg;
+      imagePreview.style.display = "block";
+      uploadStatus.textContent = "Gambar saat ini. Pilih file baru kalau mau ganti.";
+    }
+
+    window.scrollTo({ top: document.getElementById("productForm").offsetTop - 80, behavior: "smooth" });
+  }
+
+  function exitEditMode() {
+    editingId = null;
+    formTitle.textContent = "Tambah Produk";
+    submitBtn.textContent = "Tambah Produk";
+    cancelEditBtn.style.display = "none";
+    form.reset();
+    variantList.innerHTML = "";
+    toggleTypeFields();
+    imagePreview.style.display = "none";
+    imagePreview.src = "";
+    imageUrlHidden.value = "";
+    uploadStatus.textContent = "Pilih gambar dari galeri, otomatis ke-upload ke GitHub.";
+  }
+
+  cancelEditBtn.addEventListener("click", exitEditMode);
+
+  window.onEditProduct = async (productId) => {
+    const product = await getProduct(productId);
+    if (product) enterEditMode(product);
+  };
+
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+    errorEl.textContent = "";
+
+    const type = document.getElementById("type").value;
+    const variants = type === "digital" ? collectVariants() : [];
+
+    if (type === "digital" && variants.length === 0) {
+      errorEl.textContent = "Isi minimal 1 varian durasi & harga.";
+      return;
+    }
+    if (type === "food" && (!priceInput.value || Number(priceInput.value) <= 0)) {
+      errorEl.textContent = "Isi harga produk.";
+      return;
+    }
+
+    submitBtn.textContent = "Menyimpan...";
+    submitBtn.disabled = true;
+
+    const formData = {
+      name: document.getElementById("name").value.trim(),
+      type,
+      price: type === "digital" ? Math.min(...variants.map((v) => v.price)) : Number(priceInput.value) || 0,
+      variants,
+      desc: document.getElementById("desc").value.trim(),
+      imageUrl: document.getElementById("imageUrl").value.trim(),
+    };
+
+    const action = editingId
+      ? (data, cb) => updateProduct(editingId, data, cb)
+      : addProduct;
+
+    action(formData, (ok, msg) => {
+      submitBtn.disabled = false;
+      if (ok) {
+        const wasEditing = !!editingId;
+        exitEditMode();
+        showToast(wasEditing ? "Produk berhasil diupdate" : "Produk berhasil ditambahkan");
+        renderAdminProductList("adminProductList");
+      } else {
+        submitBtn.textContent = editingId ? "Simpan Perubahan" : "Tambah Produk";
+        errorEl.textContent = msg || "Gagal menyimpan produk.";
+      }
+    });
+  });
+</script>
+</body>
+</html>

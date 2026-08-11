@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Pengaturan Toko — Admin Fhmii Store</title>
+<link rel="stylesheet" href="../css/style.css" />
+<script>
+  (function () {
+    var saved = localStorage.getItem("fhmii-theme");
+    var theme = saved || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    document.documentElement.setAttribute("data-theme", theme);
+  })();
+</script>
+</head>
+<body>
+<div class="admin-shell" id="adminShell" style="display:none;">
+  <header class="admin-header wrap">
+    <a href="/" class="brand">
+      <img src="../assets/media/fhmii.png" alt="Fhmii Store" class="brand-logo"
+           onerror="this.replaceWith(Object.assign(document.createElement('div'), {className:'brand-logo-fallback', textContent:'F'}))" />
+      <span class="brand-name">Fhmii Store <span class="muted" style="font-weight:400;">· Admin</span></span>
+    </a>
+    <div style="display:flex; gap:8px; align-items:center;">
+      <button data-theme-toggle class="icon-btn" aria-label="Ganti tema">
+        <svg class="dark-icon" style="display:none" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1.5M12 19.5V21M4.6 4.6l1.1 1.1M18.3 18.3l1.1 1.1M3 12h1.5M19.5 12H21M4.6 19.4l1.1-1.1M18.3 5.7l1.1-1.1M16.5 12a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0Z"/></svg>
+        <svg class="light-icon" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg>
+      </button>
+      <button class="btn-ghost" id="logoutBtn" style="font-size:13px;padding:8px 16px;">Keluar</button>
+    </div>
+  </header>
+
+  <main class="admin-main wrap">
+    <h1 class="page-title" style="font-size:24px;">Pengaturan Toko</h1>
+    <p class="page-subtitle" style="margin-bottom:8px;">Nomor WA, e-wallet, & QRIS yang ditampilkan ke pembeli.</p>
+    <nav style="display:flex;gap:16px;margin-bottom:24px;">
+      <a href="/admin" style="color:var(--accent);font-size:13px;font-weight:500;">Dashboard</a>
+      <a href="produk" style="color:var(--accent);font-size:13px;font-weight:500;">Kelola Produk</a>
+      <a href="pesanan" style="color:var(--accent);font-size:13px;font-weight:500;">Kelola Pesanan</a>
+    </nav>
+
+    <div class="admin-card" style="max-width:520px;">
+      <h2>Kontak & Pembayaran</h2>
+      <form id="settingsForm">
+        <div class="field">
+          <label for="waNumber">Nomor WhatsApp Toko</label>
+          <input type="text" id="waNumber" placeholder="6281234567890 (format internasional, tanpa +)" />
+        </div>
+        <div class="field">
+          <label for="dana">Nomor Dana</label>
+          <input type="text" id="dana" placeholder="08xxxxxxxxxx" />
+        </div>
+        <div class="field">
+          <label for="gopay">Nomor GoPay</label>
+          <input type="text" id="gopay" placeholder="08xxxxxxxxxx" />
+        </div>
+        <div class="field">
+          <label for="ovo">Nomor OVO</label>
+          <input type="text" id="ovo" placeholder="08xxxxxxxxxx" />
+        </div>
+        <div class="field">
+          <label for="qrisFile">Gambar QRIS</label>
+          <input type="file" id="qrisFile" accept="image/*" />
+          <p class="muted" id="qrisStatus" style="font-size:12px;margin-top:6px;">Upload gambar QRIS toko, otomatis ke-upload ke GitHub.</p>
+          <img id="qrisPreview" style="display:none;margin-top:10px;width:160px;border-radius:10px;" />
+        </div>
+        <p class="form-error" id="formError"></p>
+        <p class="form-error" id="formSuccess" style="color:#22c55e;"></p>
+        <button type="submit" class="btn-primary btn-block" id="submitBtn">Simpan Pengaturan</button>
+      </form>
+    </div>
+  </main>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+<script src="../js/firebase-config.js"></script>
+<script src="../js/auth.js"></script>
+<script src="../js/site-config.js"></script>
+<script src="../js/github-upload.js"></script>
+<script src="../js/theme.js"></script>
+<script>
+  function syncIcons() {
+    const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+    document.querySelectorAll(".dark-icon").forEach(el => el.style.display = isDark ? "block" : "none");
+    document.querySelectorAll(".light-icon").forEach(el => el.style.display = isDark ? "none" : "block");
+  }
+  syncIcons();
+  document.querySelectorAll("[data-theme-toggle]").forEach(btn => btn.addEventListener("click", () => setTimeout(syncIcons, 0)));
+  document.getElementById("logoutBtn").addEventListener("click", logoutAdmin);
+
+  let qrisImageUrl = "";
+
+  document.getElementById("qrisFile").addEventListener("change", async () => {
+    const file = document.getElementById("qrisFile").files[0];
+    if (!file) return;
+    const statusEl = document.getElementById("qrisStatus");
+    statusEl.textContent = "Mengupload QRIS ke GitHub...";
+    try {
+      qrisImageUrl = await uploadImageToGithub(file, "assets/store");
+      document.getElementById("qrisPreview").src = qrisImageUrl;
+      document.getElementById("qrisPreview").style.display = "block";
+      statusEl.textContent = "QRIS berhasil diupload.";
+    } catch (err) {
+      statusEl.textContent = err.message;
+    }
+  });
+
+  async function loadSettings() {
+    const config = await getStoreConfig();
+    document.getElementById("waNumber").value = config.waNumber || "";
+    document.getElementById("dana").value = config.ewallet.dana || "";
+    document.getElementById("gopay").value = config.ewallet.gopay || "";
+    document.getElementById("ovo").value = config.ewallet.ovo || "";
+    if (config.qrisImageUrl) {
+      qrisImageUrl = config.qrisImageUrl;
+      document.getElementById("qrisPreview").src = qrisImageUrl;
+      document.getElementById("qrisPreview").style.display = "block";
+    }
+  }
+
+  document.getElementById("settingsForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const errorEl = document.getElementById("formError");
+    const successEl = document.getElementById("formSuccess");
+    errorEl.textContent = "";
+    successEl.textContent = "";
+
+    const btn = document.getElementById("submitBtn");
+    btn.textContent = "Menyimpan...";
+    btn.disabled = true;
+
+    try {
+      await db.collection("config").doc("general").set({
+        waNumber: document.getElementById("waNumber").value.trim(),
+        ewallet: {
+          dana: document.getElementById("dana").value.trim(),
+          gopay: document.getElementById("gopay").value.trim(),
+          ovo: document.getElementById("ovo").value.trim(),
+        },
+        qrisImageUrl,
+        pin: getStoredPin(),
+      }, { merge: true });
+      successEl.textContent = "Pengaturan berhasil disimpan.";
+    } catch (err) {
+      console.error(err);
+      errorEl.textContent = "Gagal menyimpan pengaturan.";
+    } finally {
+      btn.textContent = "Simpan Pengaturan";
+      btn.disabled = false;
+    }
+  });
+
+  (async function init() {
+    const allowed = await guardAdminPage();
+    if (!allowed) return;
+    document.getElementById("adminShell").style.display = "block";
+    loadSettings();
+  })();
+</script>
+</body>
+</html>
