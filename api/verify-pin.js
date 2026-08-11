@@ -20,6 +20,18 @@ if (!admin.apps.length) {
 }
 
 module.exports = async (req, res) => {
+  // Endpoint debug sementara: buka di browser (GET) buat cek env var
+  // mana aja yang ke-detect Vercel. Cuma nunjukin ada/nggak, bukan isinya.
+  if (req.method === "GET") {
+    return res.status(200).json({
+      hasProjectId: !!process.env.FIREBASE_PROJECT_ID,
+      hasClientEmail: !!process.env.FIREBASE_CLIENT_EMAIL,
+      hasPrivateKey: !!process.env.FIREBASE_PRIVATE_KEY,
+      hasAdminPin: !!process.env.ADMIN_PIN,
+      projectIdPreview: process.env.FIREBASE_PROJECT_ID || null,
+    });
+  }
+
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
