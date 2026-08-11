@@ -1,4 +1,5 @@
-// js/rating.js — Google Sign-In buat rating produk + submit & tampilkan review
+// js/rating.js — Google Sign-In buat rating produk + submit, kalkulasi rata-rata,
+// dan sinkronisasi ke dokumen produk biar muncul di kartu produk juga.
 // Non-module, pakai `auth`, `googleProvider`, `db` global dari firebase-config.js
 
 let currentUser = null;
@@ -25,36 +26,91 @@ function signOutUser() {
 
 async function submitRating(productId, { star, comment }) {
   if (!currentUser) throw new Error("Harus login dulu buat kasih rating.");
-  await db.collection("products").doc(productId).collection("ratings").add({
+
+  const ratingsRef = db.collection("products").doc(productId).collection("ratings");
+
+  // Satu user cuma boleh punya 1 rating per produk — kalau udah pernah
+  // ngerating, update yang lama daripada numpuk entri baru.
+  const existing = await ratingsRef.where("uid", "==", currentUser.uid).limit(1).get();
+  const payload = {
     uid: currentUser.uid,
     name: currentUser.displayName || "Pengguna",
+    photoURL: currentUser.photoURL || null,
     star,
     comment: comment || "",
     createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-  });
+  };
+
+  if (!existing.empty) {
+    await ratingsRef.doc(existing.docs[0].id).update(payload);
+  } else {
+    await ratingsRef.add(payload);
+  }
+
+  await syncProductRatingSummary(productId);
+}
+
+// Ambil semua rating produk, hitung ulang rata-rata & jumlahnya, terus
+// tulis balik ke dokumen produk (dibolehin rules khusus buat 2 field ini).
+async function syncProductRatingSummary(productId) {
+  try {
+    const snap = await db.collection("products").doc(productId).collection("ratings").get();
+    const count = snap.size;
+    let avg = 0;
+    if (count > 0) {
+      let total = 0;
+      snap.forEach((doc) => { total += doc.data().star || 0; });
+      avg = total / count;
+    }
+    await db.collection("products").doc(productId).update({
+      ratingAvg: avg,
+      ratingCount: count,
+    });
+  } catch (err) {
+    console.error("Gagal sinkronisasi rata-rata rating ke produk:", err);
+  }
+}
+
+function initialsAvatar(name) {
+  const initial = (name || "?").trim().charAt(0).toUpperCase();
+  return `<div class="review-avatar-fallback">${initial}</div>`;
+}
+
+function formatReviewDate(timestamp) {
+  if (!timestamp || !timestamp.toDate) return "";
+  const date = timestamp.toDate();
+  return date.toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" });
 }
 
 function reviewStars(star) {
   let out = "";
   for (let i = 1; i <= 5; i++) {
-    out += `<svg class="star ${i <= star ? "" : "empty"}" width="14" height="14" fill="currentColor" viewBox="0 0 20 20"><path d="M10 1.5l2.6 5.5 6 .8-4.4 4.2 1 6-5.2-2.9-5.2 2.9 1-6L1.4 7.8l6-.8L10 1.5z"/></svg>`;
+    out += `<svg class="star ${i <= star ? "" : "empty"}" width="13" height="13" fill="currentColor" viewBox="0 0 20 20"><path d="M10 1.5l2.6 5.5 6 .8-4.4 4.2 1 6-5.2-2.9-5.2 2.9 1-6L1.4 7.8l6-.8L10 1.5z"/></svg>`;
   }
   return out;
 }
 
 function reviewItem(review) {
+  const avatar = review.photoURL
+    ? `<img src="${review.photoURL}" alt="${review.name}" class="review-avatar" referrerpolicy="no-referrer" onerror="this.replaceWith(Object.assign(document.createElement('div'), {className:'review-avatar-fallback', textContent:'${(review.name || "?").charAt(0).toUpperCase()}'}))" />`
+    : initialsAvatar(review.name);
+
   return `
   <div class="review-item">
-    <div class="review-head">
-      <strong style="font-size:13px;">${review.name}</strong>
-      <div class="review-stars">${reviewStars(review.star)}</div>
+    <div class="review-top">
+      ${avatar}
+      <div class="review-meta">
+        <p class="review-name">${review.name}</p>
+        <div class="review-stars-row">
+          <div class="review-stars">${reviewStars(review.star)}</div>
+          <span class="review-date">${formatReviewDate(review.createdAt)}</span>
+        </div>
+      </div>
     </div>
     ${review.comment ? `<p class="review-text">${review.comment}</p>` : ""}
   </div>`;
 }
 
-// Ambil semua rating produk, tampilkan daftar + hitung rata-rata (dihitung
-// di sisi client karena update field ratingAvg di dokumen produk butuh PIN admin)
 async function renderRatings(productId, containerId, summaryId) {
   const container = document.getElementById(containerId);
   const summary = document.getElementById(summaryId);
@@ -75,7 +131,7 @@ async function renderRatings(productId, containerId, summaryId) {
 
     if (summary) {
       const avg = reviews.reduce((sum, r) => sum + r.star, 0) / reviews.length;
-      summary.textContent = `${avg.toFixed(1)} (${reviews.length} ulasan)`;
+      summary.innerHTML = `<span class="rating-summary-avg">${avg.toFixed(1)}</span> <span class="review-stars">${reviewStars(Math.round(avg))}</span> <span class="muted">(${reviews.length})</span>`;
     }
   } catch (err) {
     console.error("Gagal memuat rating:", err);

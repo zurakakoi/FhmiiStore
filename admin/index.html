@@ -47,7 +47,12 @@
     </div>
 
     <div class="admin-card">
-      <h2>Grafik Penjualan (6 Bulan Terakhir)</h2>
+      <h2>Grafik Penjualan</h2>
+      <div class="range-tabs">
+        <button class="range-tab" data-range="7d">7 Hari</button>
+        <button class="range-tab active" data-range="30d">1 Bulan</button>
+        <button class="range-tab" data-range="1y">1 Tahun</button>
+      </div>
       <div id="salesChart"></div>
     </div>
   </main>
@@ -87,15 +92,27 @@
     cards[1].querySelector(".value").textContent = stats.doneCount;
     cards[2].querySelector(".value").textContent = formatRupiahShort(stats.totalRevenue);
     cards[3].querySelector(".value").textContent = formatRupiahShort(thisMonthRevenue);
-
-    renderSalesChart("salesChart", monthly);
   }
+
+  async function loadChart(range) {
+    const points = await getSalesSeries(range);
+    renderSalesChart("salesChart", points);
+  }
+
+  document.querySelectorAll(".range-tab").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".range-tab").forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+      loadChart(btn.dataset.range);
+    });
+  });
 
   (async function init() {
     const allowed = await guardAdminPage();
     if (!allowed) return;
     document.getElementById("adminShell").style.display = "block";
     loadDashboard();
+    loadChart("30d");
   })();
 </script>
 </body>

@@ -242,6 +242,59 @@ async function renderAdminOrders(containerId, status) {
   }
 }
 
+const CHART_MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
+const CHART_DAY_NAMES = ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"];
+
+// Ambil data penjualan (order status "selesai") dikelompokkan per hari/bulan
+// sesuai rentang yang dipilih: '7d', '30d', atau '1y'.
+async function getSalesSeries(range) {
+  const snap = await db.collection("orders").where("status", "==", "selesai").get();
+  const now = new Date();
+  const points = [];
+
+  if (range === "7d" || range === "30d") {
+    const days = range === "7d" ? 7 : 30;
+    const buckets = {};
+    for (let i = days - 1; i >= 0; i--) {
+      const d = new Date(now);
+      d.setDate(now.getDate() - i);
+      buckets[d.toISOString().slice(0, 10)] = 0;
+    }
+    snap.forEach((doc) => {
+      const data = doc.data();
+      if (!data.completedAt) return;
+      const key = data.completedAt.toDate().toISOString().slice(0, 10);
+      if (key in buckets) buckets[key] += data.price || 0;
+    });
+    const keys = Object.keys(buckets);
+    keys.forEach((key, i) => {
+      const d = new Date(key);
+      const showLabel = days === 7 || i % 5 === 0 || i === keys.length - 1;
+      const label = days === 7 ? CHART_DAY_NAMES[d.getDay()] : (showLabel ? String(d.getDate()) : "");
+      points.push({ label, value: buckets[key] });
+    });
+  } else {
+    const buckets = {};
+    for (let i = 11; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      buckets[`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`] = 0;
+    }
+    snap.forEach((doc) => {
+      const data = doc.data();
+      if (!data.completedAt) return;
+      const d = data.completedAt.toDate();
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      if (key in buckets) buckets[key] += data.price || 0;
+    });
+    Object.entries(buckets).forEach(([key, value]) => {
+      const [, m] = key.split("-");
+      points.push({ label: CHART_MONTH_NAMES[Number(m) - 1], value });
+    });
+  }
+
+  return points;
+}
+
 // Ringkasan buat dashboard: jumlah pending, total omzet, jumlah order selesai
 async function getOrderStats() {
   const [pendingSnap, doneSnap] = await Promise.all([
