@@ -1,5 +1,5 @@
 // js/admin-orders.js — kelola pesanan di dashboard admin (pending & riwayat)
-// Non-module, pakai `db` global & getStoredPin() dari auth.js
+// Non-module, pakai `db` global dari firebase-config.js
 
 function formatRupiahAdmin(n) {
   return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(n || 0);
@@ -150,7 +150,6 @@ async function renderAdminOrders(containerId, status) {
           await db.collection("orders").doc(btn.dataset.complete).update({
             status: "selesai",
             completedAt: firebase.firestore.FieldValue.serverTimestamp(),
-            pin: getStoredPin(),
           });
           renderAdminOrders(containerId, status);
           if (typeof window.onOrderCompleted === "function") window.onOrderCompleted();

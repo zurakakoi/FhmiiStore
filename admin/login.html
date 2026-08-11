@@ -39,48 +39,19 @@
         <p class="form-error" id="formError"></p>
         <button type="submit" class="btn-primary btn-block" id="submitBtn">Masuk</button>
       </form>
-
-      <!-- PANEL DEBUG SEMENTARA — hapus nanti kalau udah beres -->
-      <div style="margin-top:20px;text-align:left;">
-        <p class="muted" style="font-size:11px;margin-bottom:6px;">Debug log:</p>
-        <pre id="debugLog" style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:10px;font-size:11px;white-space:pre-wrap;word-break:break-all;max-height:200px;overflow:auto;margin:0;">Menunggu...</pre>
-      </div>
     </div>
   </main>
 </div>
 
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+<script src="../js/firebase-config.js"></script>
+<script src="../js/auth.js"></script>
 <script>
-  // ---- Debug logger, tampil di layar ----
-  const debugEl = () => document.getElementById("debugLog");
-  function log(msg) {
-    const time = new Date().toLocaleTimeString("id-ID");
-    const el = debugEl();
-    if (el) el.textContent += `\n[${time}] ${msg}`;
-    console.log(msg);
-  }
-  window.addEventListener("error", (e) => {
-    log(`❌ JS ERROR: ${e.message} (${e.filename}:${e.lineno})`);
-  });
-  window.addEventListener("unhandledrejection", (e) => {
-    log(`❌ PROMISE ERROR: ${e.reason}`);
-  });
-  log("Halaman dimuat, mulai load script...");
-</script>
-
-<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js" onload="log('✅ firebase-app-compat.js loaded')" onerror="log('❌ GAGAL load firebase-app-compat.js (cek internet/domain diblokir)')"></script>
-<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js" onload="log('✅ firebase-firestore-compat.js loaded')" onerror="log('❌ GAGAL load firebase-firestore-compat.js')"></script>
-<script src="../js/firebase-config.js" onload="log('✅ firebase-config.js loaded, db siap: ' + (typeof db))" onerror="log('❌ GAGAL load firebase-config.js (cek path/lokasi file)')"></script>
-<script src="../js/auth.js" onload="log('✅ auth.js loaded, submitAdminPin: ' + (typeof submitAdminPin))" onerror="log('❌ GAGAL load auth.js (cek path/lokasi file)')"></script>
-
-<script>
-  log("Setup form listener...");
   const form = document.getElementById("loginForm");
   const errorEl = document.getElementById("formError");
   const submitBtn = document.getElementById("submitBtn");
-
-  if (typeof submitAdminPin !== "function") {
-    log("⚠️ submitAdminPin BELUM ke-define pas script ini jalan. File auth.js mungkin belum sempet ke-load / ada error di dalamnya.");
-  }
 
   form.addEventListener("submit", (e) => {
     e.preventDefault();
@@ -89,33 +60,12 @@
     submitBtn.disabled = true;
 
     const pin = document.getElementById("pin").value.trim();
-    log(`Submit diklik, PIN panjang: ${pin.length} karakter`);
-
-    if (typeof submitAdminPin !== "function") {
-      log("❌ submitAdminPin gak ada / bukan function. Berhenti di sini.");
-      errorEl.textContent = "Terjadi error internal (lihat debug log di bawah).";
+    submitAdminPin(pin, (msg) => {
+      errorEl.textContent = msg;
       submitBtn.textContent = "Masuk";
       submitBtn.disabled = false;
-      return;
-    }
-
-    log("Manggil submitAdminPin()...");
-    try {
-      submitAdminPin(pin, (msg) => {
-        log(`Callback onError jalan: ${msg}`);
-        errorEl.textContent = msg;
-        submitBtn.textContent = "Masuk";
-        submitBtn.disabled = false;
-      });
-      log("submitAdminPin() dipanggil, nunggu hasil (max 8 detik)...");
-    } catch (err) {
-      log(`❌ Exception pas manggil submitAdminPin: ${err.message}`);
-      errorEl.textContent = "Error internal.";
-      submitBtn.textContent = "Masuk";
-      submitBtn.disabled = false;
-    }
+    });
   });
-  log("Form listener siap. Silakan masukin PIN & submit.");
 </script>
 </body>
 </html>

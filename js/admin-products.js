@@ -1,5 +1,5 @@
 // js/admin-products.js — CRUD produk dari sisi admin.
-// Non-module, pakai `db` global dari firebase-config.js & getStoredPin() dari admin-auth.js
+// Non-module, pakai `db` global dari firebase-config.js
 
 function showToast(message) {
   const toast = document.getElementById("toast");
@@ -10,7 +10,6 @@ function showToast(message) {
 }
 
 async function addProduct(formData, onDone) {
-  const pin = getStoredPin();
   try {
     await db.collection("products").add({
       name: formData.name,
@@ -22,7 +21,6 @@ async function addProduct(formData, onDone) {
       ratingAvg: 0,
       ratingCount: 0,
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-      pin: pin, // dibutuhkan buat lolos Firestore rules (lihat catatan keamanan di README)
     });
     onDone(true);
   } catch (err) {
@@ -32,7 +30,6 @@ async function addProduct(formData, onDone) {
 }
 
 async function updateProduct(productId, formData, onDone) {
-  const pin = getStoredPin();
   try {
     const updateData = {
       name: formData.name,
@@ -40,7 +37,6 @@ async function updateProduct(productId, formData, onDone) {
       price: Number(formData.price) || 0,
       variants: formData.variants || [],
       desc: formData.desc || "",
-      pin: pin, // dibutuhkan buat lolos Firestore rules
     };
     if (formData.imageUrl) {
       updateData.images = [formData.imageUrl];
