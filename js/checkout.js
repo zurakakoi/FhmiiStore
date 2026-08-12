@@ -44,4 +44,14 @@ async function saveOrder(order) {
     status: "pending",
     createdAt: firebase.firestore.FieldValue.serverTimestamp(),
   });
+
+  // Naikin hitungan "peminat" produk biar urutan populer kepengaruh.
+  // Gagal di sini gak boleh gagalin keseluruhan order, jadi dipisah try/catch.
+  try {
+    await db.collection("products").doc(order.productId).update({
+      orderCount: firebase.firestore.FieldValue.increment(1),
+    });
+  } catch (err) {
+    console.error("Gagal update orderCount produk:", err);
+  }
 }

@@ -99,6 +99,7 @@ async function renderProductList(containerId, { type = null, max = 50 } = {}) {
     if (type === "digital" || type === "food") {
       products = products.filter((p) => p.type === type);
     }
+    products.sort((a, b) => (b.orderCount || 0) - (a.orderCount || 0));
 
     if (products.length === 0) {
       container.innerHTML = `
@@ -141,6 +142,7 @@ async function renderFeaturedProducts(containerId, max = 8) {
 
     const products = [];
     snap.forEach((doc) => products.push({ id: doc.id, ...doc.data() }));
+    products.sort((a, b) => (b.orderCount || 0) - (a.orderCount || 0));
     container.innerHTML = products.map(productCard).join("");
     observeReveal(container);
   } catch (err) {

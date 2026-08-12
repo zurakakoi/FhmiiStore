@@ -20,6 +20,7 @@ async function addProduct(formData, onDone) {
       images: formData.imageUrl ? [formData.imageUrl] : [],
       ratingAvg: 0,
       ratingCount: 0,
+      orderCount: 0,
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
     });
     onDone(true);
