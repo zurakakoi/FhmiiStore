@@ -5,7 +5,7 @@
 
 const firebaseConfig = {
   apiKey: "AIzaSyCyApT4lHJz8KhP_lVEOxCxRIAhEjIsTYQ",
-  authDomain: "fhmii-store.vercel.app",
+  authDomain: "fhmii-store.firebaseapp.com",
   projectId: "fhmii-store",
   storageBucket: "fhmii-store.firebasestorage.app",
   messagingSenderId: "456290836746",
