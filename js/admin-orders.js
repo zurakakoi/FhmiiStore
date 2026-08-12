@@ -19,36 +19,56 @@ function normalizeWaNumber(num) {
 
 function buildAccountMessage(order, panel) {
   const activeType = panel.querySelector("[data-delivery-type].selected").dataset.deliveryType;
-  const lines = [`Halo ${order.customerName}, terima kasih udah pesan *${order.productName}* (${order.variantLabel || ""}) di Fhmii Store!`, ``, `Berikut data akun kamu:`];
+  const lines = [
+    `Halo *${order.customerName}* 👋`,
+    ``,
+    `Terima kasih udah pesan *${order.productName}*${order.variantLabel ? ` _(${order.variantLabel})_` : ""} di *Fhmii Store* 🎉`,
+    ``,
+    `🔐 *Data Akun Kamu*`,
+    `━━━━━━━━━━━━━━`,
+  ];
 
   if (activeType === "invite") {
     const link = panel.querySelector(".delivery-invite").value.trim();
     if (!link) { alert("Isi link invite dulu."); return null; }
-    lines.push(`Link Invite: ${link}`);
+    lines.push(`🔗 Link Invite:`, `\`${link}\``);
   } else {
     const username = panel.querySelector(".delivery-username").value.trim();
     const password = panel.querySelector(".delivery-password").value.trim();
     if (!username || !password) { alert("Isi email/username & password dulu."); return null; }
-    lines.push(`Email/Username: ${username}`, `Password: ${password}`);
+    lines.push(`📧 Email/Username: \`${username}\``, `🔑 Password: \`${password}\``);
   }
 
-  lines.push(``, `Selamat menikmati! Kalau ada kendala, langsung balas pesan ini ya.`);
+  lines.push(`━━━━━━━━━━━━━━`, ``, `Selamat menikmati! 😊 Kalau ada kendala, langsung balas pesan ini ya.`);
   return lines.join("\n");
 }
 
-function buildFoodStatusMessage(order, statusText) {
+const FOOD_STATUS_EMOJI = {
+  proses: "⏳",
+  antar: "🛵",
+  ambil: "✅",
+  selesai: "🎉",
+};
+
+function buildFoodStatusMessage(order, statusText, statusKey = "proses") {
   const paymentLabel = { cod: "Bayar di tempat", dana: "Dana", gopay: "GoPay", ovo: "OVO", qris: "QRIS" }[order.paymentMethod] || order.paymentMethod;
+  const emoji = FOOD_STATUS_EMOJI[statusKey] || "📦";
+
   const lines = [
-    `Halo ${order.customerName}, ${statusText}`,
+    `Halo *${order.customerName}* 👋`,
     ``,
-    `Detail pesanan kamu:`,
-    `${order.productName} x${order.qty || 1}`,
-    `Total: ${formatRupiahAdmin(order.price)}`,
-    `Metode: ${order.fulfillment === "delivery" ? "Diantar" : "Ambil di tempat"}`,
+    `${emoji} ${statusText}`,
+    ``,
+    `📋 *Detail Pesanan*`,
+    `━━━━━━━━━━━━━━`,
+    `🍽️ ${order.productName} \`x${order.qty || 1}\``,
+    `💰 Total: *${formatRupiahAdmin(order.price)}*`,
+    `🚚 Metode: _${order.fulfillment === "delivery" ? "Diantar" : "Ambil di tempat"}_`,
   ];
-  if (order.address) lines.push(`Alamat: ${order.address}`);
-  lines.push(`Bayar: ${paymentLabel}`);
-  if (order.notes) lines.push(`Catatan: ${order.notes}`);
+  if (order.address) lines.push(`📍 Alamat: ${order.address}`);
+  lines.push(`💳 Bayar: _${paymentLabel}_`);
+  if (order.notes) lines.push(`📝 Catatan: ${order.notes}`);
+  lines.push(`━━━━━━━━━━━━━━`, ``, `Terima kasih udah pesan di *Fhmii Store* 🙏`);
   return lines.join("\n");
 }
 
@@ -73,9 +93,9 @@ function orderRow(order) {
     <div class="delivery-panel" id="chat-${order.id}" style="display:none;margin-top:12px;padding-top:12px;border-top:1px dashed var(--border);">
       <p class="option-label" style="margin-bottom:8px;">Kirim update status</p>
       <div style="display:flex; flex-direction:column; gap:8px;">
-        <button class="btn-ghost" style="font-size:13px;text-align:left;padding:10px 14px;" data-status-msg="${order.id}" data-status-text="pesanan kamu lagi diproses ya, ditunggu sebentar.">Pesanan Diproses</button>
-        <button class="btn-ghost" style="font-size:13px;text-align:left;padding:10px 14px;" data-status-msg="${order.id}" data-status-text="${order.fulfillment === "delivery" ? "pesanan kamu udah otw diantar." : "pesanan kamu udah siap, silakan diambil ya."}">${order.fulfillment === "delivery" ? "Sedang Diantar" : "Siap Diambil"}</button>
-        <button class="btn-ghost" style="font-size:13px;text-align:left;padding:10px 14px;" data-status-msg="${order.id}" data-status-text="pesanan kamu udah selesai. Makasih udah order di Fhmii Store!">Pesanan Selesai</button>
+        <button class="btn-ghost" style="font-size:13px;text-align:left;padding:10px 14px;" data-status-msg="${order.id}" data-status-key="proses" data-status-text="pesanan kamu lagi diproses ya, ditunggu sebentar.">⏳ Pesanan Diproses</button>
+        <button class="btn-ghost" style="font-size:13px;text-align:left;padding:10px 14px;" data-status-msg="${order.id}" data-status-key="${order.fulfillment === "delivery" ? "antar" : "ambil"}" data-status-text="${order.fulfillment === "delivery" ? "pesanan kamu udah otw diantar." : "pesanan kamu udah siap, silakan diambil ya."}">${order.fulfillment === "delivery" ? "🛵 Sedang Diantar" : "✅ Siap Diambil"}</button>
+        <button class="btn-ghost" style="font-size:13px;text-align:left;padding:10px 14px;" data-status-msg="${order.id}" data-status-key="selesai" data-status-text="pesanan kamu udah selesai. Makasih udah order di Fhmii Store!">🎉 Pesanan Selesai</button>
       </div>
     </div>
   ` : "";
@@ -195,7 +215,7 @@ async function renderAdminOrders(containerId, status) {
     container.querySelectorAll("[data-status-msg]").forEach((btn) => {
       btn.addEventListener("click", () => {
         const order = orders.find((o) => o.id === btn.dataset.statusMsg);
-        const message = buildFoodStatusMessage(order, btn.dataset.statusText);
+        const message = buildFoodStatusMessage(order, btn.dataset.statusText, btn.dataset.statusKey);
         window.open(`https://wa.me/${normalizeWaNumber(order.buyerWhatsapp)}?text=${encodeURIComponent(message)}`, "_blank");
       });
     });

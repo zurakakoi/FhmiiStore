@@ -2,25 +2,25 @@
 // Non-module, pakai `db` global & buildWaLink() dari site-config.js
 
 function buildOrderMessage(order) {
-  const lines = [`Halo, saya mau pesan:`, ``, `*${order.productName}*`];
+  const lines = [`Halo min 👋, saya mau pesan:`, ``, `🛍️ *${order.productName}*`];
 
-  if (order.variantLabel) lines.push(`Durasi: ${order.variantLabel}`);
-  if (order.qty) lines.push(`Jumlah: ${order.qty}`);
-  lines.push(`Harga: ${new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(order.price)}`);
+  if (order.variantLabel) lines.push(`⏱️ Durasi: _${order.variantLabel}_`);
+  if (order.qty) lines.push(`🔢 Jumlah: \`${order.qty}\``);
+  lines.push(`💰 Harga: *${new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(order.price)}*`);
 
   if (order.fulfillment === "delivery") {
-    lines.push(``, `Metode: Diantar`, `Alamat: ${order.address}`);
+    lines.push(``, `🚚 Metode: _Diantar_`, `📍 Alamat: ${order.address}`);
   } else if (order.fulfillment === "pickup") {
-    lines.push(``, `Metode: Ambil di tempat`);
+    lines.push(``, `🏠 Metode: _Ambil di tempat_`);
   }
 
   const paymentLabel = { cod: "Bayar di tempat", ewallet: "E-wallet (Dana/Gopay/OVO)", qris: "QRIS" }[order.paymentMethod] || order.paymentMethod;
-  lines.push(``, `Pembayaran: ${paymentLabel}`);
-  if (order.senderName) lines.push(`Nama pengirim: ${order.senderName}`);
+  lines.push(``, `💳 Pembayaran: _${paymentLabel}_`);
+  if (order.senderName) lines.push(`👤 Nama pengirim: ${order.senderName}`);
 
-  if (order.notes) lines.push(``, `Catatan: ${order.notes}`);
+  if (order.notes) lines.push(``, `📝 Catatan: ${order.notes}`);
 
-  lines.push(``, `Nama saya: ${order.customerName}`);
+  lines.push(``, `Nama saya: *${order.customerName}* 🙏`);
 
   return lines.join("\n");
 }
