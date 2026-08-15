@@ -115,7 +115,10 @@ async function renderRatings(productId, containerId, summaryId) {
   container.innerHTML = `<p class="muted" style="font-size:13px;">Memuat ulasan...</p>`;
 
   try {
-    const snap = await db.collection("products").doc(productId).collection("ratings").orderBy("createdAt", "desc").get();
+    const snap = await Promise.race([
+      db.collection("products").doc(productId).collection("ratings").orderBy("createdAt", "desc").get(),
+      new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), 8000)),
+    ]);
     if (snap.empty) {
       container.innerHTML = `<p class="muted" style="font-size:13px;">Belum ada ulasan. Jadi yang pertama kasih rating!</p>`;
       if (summary) summary.textContent = "Belum ada rating";

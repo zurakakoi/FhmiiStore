@@ -14,7 +14,10 @@ async function getStoreConfig() {
       fetch("/api/store-config"),
       new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), 8000)),
     ]);
-    if (!res.ok) return defaults;
+    if (!res.ok) {
+      console.error(`Gagal ambil setting toko: /api/store-config balikin status ${res.status}`);
+      return defaults;
+    }
     const data = await res.json();
     cachedStoreConfig = {
       waNumber: data.waNumber || defaults.waNumber,
