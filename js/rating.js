@@ -131,6 +131,6 @@ async function renderRatings(productId, containerId, summaryId) {
     }
   } catch (err) {
     console.error("Gagal memuat rating:", err);
-    container.innerHTML = `<p class="muted" style="font-size:13px;">Gagal memuat ulasan.</p>`;
+    container.innerHTML = `<p class="muted" style="font-size:13px;">Gagal memuat ulasan. <span style="color:#f87171;">[${escapeHtml(err.code || err.message || "unknown")}]</span></p>`;
   }
 }

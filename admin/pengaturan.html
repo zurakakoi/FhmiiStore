@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Pengaturan Toko</title>
+<title>Pengaturan Toko — Admin Fhmii Store</title>
 <link rel="icon" type="image/png" href="../assets/media/fhmii.png" />
 <link rel="stylesheet" href="../css/style.css" />
 <script>
@@ -109,15 +109,23 @@
   });
 
   async function loadSettings() {
-    const config = await getStoreConfig();
-    document.getElementById("waNumber").value = config.waNumber || "";
-    document.getElementById("dana").value = config.ewallet.dana || "";
-    document.getElementById("gopay").value = config.ewallet.gopay || "";
-    document.getElementById("ovo").value = config.ewallet.ovo || "";
-    if (config.qrisImageUrl) {
-      qrisImageUrl = config.qrisImageUrl;
-      document.getElementById("qrisPreview").src = qrisImageUrl;
-      document.getElementById("qrisPreview").style.display = "block";
+    // Baca langsung dari Firestore (bukan lewat /api/store-config yang
+    // sengaja di-cache buat halaman publik) biar admin selalu lihat data
+    // paling baru begitu abis nyimpen.
+    try {
+      const doc = await db.collection("config").doc("general").get();
+      const data = doc.exists ? doc.data() : {};
+      document.getElementById("waNumber").value = data.waNumber || "";
+      document.getElementById("dana").value = data.ewallet?.dana || "";
+      document.getElementById("gopay").value = data.ewallet?.gopay || "";
+      document.getElementById("ovo").value = data.ewallet?.ovo || "";
+      if (data.qrisImageUrl) {
+        qrisImageUrl = data.qrisImageUrl;
+        document.getElementById("qrisPreview").src = qrisImageUrl;
+        document.getElementById("qrisPreview").style.display = "block";
+      }
+    } catch (err) {
+      console.error("Gagal memuat pengaturan:", err);
     }
   }
 

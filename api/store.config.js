@@ -35,7 +35,7 @@ module.exports = async (req, res) => {
     const data = doc.exists ? doc.data() : {};
 
     // WHITELIST KETAT — cuma field ini yang boleh balik ke client.
-    res.setHeader("Cache-Control", "public, max-age=60"); // cache ringan, kurangin beban
+    res.setHeader("Cache-Control", "public, max-age=10"); // cache singkat aja
     return res.status(200).json({
       waNumber: data.waNumber || "",
       ewallet: {
