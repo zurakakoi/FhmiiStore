@@ -75,17 +75,17 @@ function buildFoodStatusMessage(order, statusText, statusKey = "proses") {
 function orderRow(order) {
   const paymentLabel = { cod: "Bayar di tempat", dana: "Dana", gopay: "GoPay", ovo: "OVO", qris: "QRIS" }[order.paymentMethod] || order.paymentMethod;
   const details = [
-    order.variantLabel ? `Durasi: ${order.variantLabel}` : null,
-    order.qty > 1 ? `Jumlah: ${order.qty}` : null,
+    order.variantLabel ? `Durasi: ${escapeHtml(order.variantLabel)}` : null,
+    order.qty > 1 ? `Jumlah: ${Number(order.qty) || 1}` : null,
     order.fulfillment ? `Metode: ${order.fulfillment === "delivery" ? "Diantar" : "Ambil di tempat"}` : null,
-    order.address ? `Alamat: ${order.address}` : null,
+    order.address ? `Alamat: ${escapeHtml(order.address)}` : null,
     `Bayar: ${paymentLabel}`,
-    order.senderName ? `Pengirim: ${order.senderName}` : null,
-    order.notes ? `Catatan: ${order.notes}` : null,
+    order.senderName ? `Pengirim: ${escapeHtml(order.senderName)}` : null,
+    order.notes ? `Catatan: ${escapeHtml(order.notes)}` : null,
   ].filter(Boolean).join(" · ");
 
   const contactLine = (order.type === "digital" || order.type === "food")
-    ? `<div class="contact-line">${order.buyerEmail ? `<span>${ICON_MAIL}${order.buyerEmail}</span>` : ""}${order.buyerWhatsapp ? `<span>${ICON_PHONE}${order.buyerWhatsapp}</span>` : ""}</div>`
+    ? `<div class="contact-line">${order.buyerEmail ? `<span>${ICON_MAIL}${escapeHtml(order.buyerEmail)}</span>` : ""}${order.buyerWhatsapp ? `<span>${ICON_PHONE}${escapeHtml(order.buyerWhatsapp)}</span>` : ""}</div>`
     : "";
 
   const foodChatPanel = order.type === "food" && order.buyerWhatsapp ? `
@@ -129,8 +129,8 @@ function orderRow(order) {
   <div class="admin-card" data-order="${order.id}" style="margin-bottom:12px;">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">
       <div>
-        <p style="font-weight:600;margin:0 0 2px;">${order.productName}</p>
-        <p class="muted" style="font-size:12px;margin:0 0 4px;">Pemesan: ${order.customerName}</p>
+        <p style="font-weight:600;margin:0 0 2px;">${escapeHtml(order.productName)}</p>
+        <p class="muted" style="font-size:12px;margin:0 0 4px;">Pemesan: ${escapeHtml(order.customerName)}</p>
         ${contactLine ? `<div class="muted font-mono" style="font-size:11px;margin:0 0 8px;">${contactLine}</div>` : ""}
       </div>
       <span class="font-mono" style="font-weight:600;font-size:14px;white-space:nowrap;">${formatRupiahAdmin(order.price)}</span>

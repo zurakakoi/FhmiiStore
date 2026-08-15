@@ -10,6 +10,10 @@ function showToast(message) {
 }
 
 async function addProduct(formData, onDone) {
+  if (formData.imageUrl && !isValidImageUrl(formData.imageUrl)) {
+    onDone(false, "URL gambar gak valid (cuma boleh https & domain terpercaya).");
+    return;
+  }
   try {
     await db.collection("products").add({
       name: formData.name,
@@ -31,6 +35,10 @@ async function addProduct(formData, onDone) {
 }
 
 async function updateProduct(productId, formData, onDone) {
+  if (formData.imageUrl && !isValidImageUrl(formData.imageUrl)) {
+    onDone(false, "URL gambar gak valid (cuma boleh https & domain terpercaya).");
+    return;
+  }
   try {
     const updateData = {
       name: formData.name,
@@ -67,17 +75,18 @@ async function deleteProduct(productId) {
 }
 
 function adminProductRow(product) {
-  const img = (product.images && product.images[0]) || "";
+  const img = (product.images && isValidImageUrl(product.images[0]) && product.images[0]) || "";
   const typeLabel = product.type === "digital" ? "Digital" : "Food";
+  const name = escapeHtml(product.name);
   const priceInfo =
     product.variants && product.variants.length > 0
       ? `${product.variants.length} varian, mulai Rp${Math.min(...product.variants.map((v) => v.price)).toLocaleString("id-ID")}`
       : `Rp${(product.price || 0).toLocaleString("id-ID")}`;
   return `
   <div class="admin-list-item" data-id="${product.id}">
-    ${img ? `<img src="${img}" alt="${product.name}" />` : `<div class="brand-logo-fallback" style="width:44px;height:44px;border-radius:8px;">${typeLabel[0]}</div>`}
+    ${img ? `<img src="${img}" alt="${name}" />` : `<div class="brand-logo-fallback" style="width:44px;height:44px;border-radius:8px;">${typeLabel[0]}</div>`}
     <div class="info">
-      <p class="name">${product.name}</p>
+      <p class="name">${name}</p>
       <p class="meta">${typeLabel} · ${priceInfo}</p>
     </div>
     <button class="btn-ghost" style="font-size:12px;padding:6px 12px;" data-edit="${product.id}">Edit</button>

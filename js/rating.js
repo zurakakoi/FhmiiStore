@@ -51,20 +51,14 @@ async function submitRating(productId, { star, comment }) {
 }
 
 // Ambil semua rating produk, hitung ulang rata-rata & jumlahnya, terus
-// tulis balik ke dokumen produk (dibolehin rules khusus buat 2 field ini).
+// tulis balik ke dokumen produk lewat server function (bukan client
+// langsung) biar gak bisa dimanipulasi/di-spam bot.
 async function syncProductRatingSummary(productId) {
   try {
-    const snap = await db.collection("products").doc(productId).collection("ratings").get();
-    const count = snap.size;
-    let avg = 0;
-    if (count > 0) {
-      let total = 0;
-      snap.forEach((doc) => { total += doc.data().star || 0; });
-      avg = total / count;
-    }
-    await db.collection("products").doc(productId).update({
-      ratingAvg: avg,
-      ratingCount: count,
+    await fetch("/api/sync-rating", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ productId }),
     });
   } catch (err) {
     console.error("Gagal sinkronisasi rata-rata rating ke produk:", err);
@@ -73,7 +67,7 @@ async function syncProductRatingSummary(productId) {
 
 function initialsAvatar(name) {
   const initial = (name || "?").trim().charAt(0).toUpperCase();
-  return `<div class="review-avatar-fallback">${initial}</div>`;
+  return `<div class="review-avatar-fallback">${escapeHtml(initial)}</div>`;
 }
 
 function formatReviewDate(timestamp) {
@@ -91,8 +85,10 @@ function reviewStars(star) {
 }
 
 function reviewItem(review) {
-  const avatar = review.photoURL
-    ? `<img src="${review.photoURL}" alt="${review.name}" class="review-avatar" referrerpolicy="no-referrer" onerror="this.replaceWith(Object.assign(document.createElement('div'), {className:'review-avatar-fallback', textContent:'${(review.name || "?").charAt(0).toUpperCase()}'}))" />`
+  const name = escapeHtml(review.name);
+  const safePhoto = isValidImageUrl(review.photoURL) ? review.photoURL : null;
+  const avatar = safePhoto
+    ? `<img src="${safePhoto}" alt="${name}" class="review-avatar" referrerpolicy="no-referrer" onerror="this.replaceWith(Object.assign(document.createElement('div'), {className:'review-avatar-fallback', textContent:'${escapeHtml((review.name || "?").charAt(0).toUpperCase())}'}))" />`
     : initialsAvatar(review.name);
 
   return `
@@ -100,14 +96,14 @@ function reviewItem(review) {
     <div class="review-top">
       ${avatar}
       <div class="review-meta">
-        <p class="review-name">${review.name}</p>
+        <p class="review-name">${name}</p>
         <div class="review-stars-row">
           <div class="review-stars">${reviewStars(review.star)}</div>
           <span class="review-date">${formatReviewDate(review.createdAt)}</span>
         </div>
       </div>
     </div>
-    ${review.comment ? `<p class="review-text">${review.comment}</p>` : ""}
+    ${review.comment ? `<p class="review-text">${escapeHtml(review.comment)}</p>` : ""}
   </div>`;
 }
 

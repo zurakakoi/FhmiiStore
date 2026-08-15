@@ -30,19 +30,21 @@ function priceLabel(product) {
 }
 
 function productCard(product) {
-  const img = (product.images && product.images[0]) || PLACEHOLDER_IMG;
+  const img = (product.images && isValidImageUrl(product.images[0]) && product.images[0]) || PLACEHOLDER_IMG;
   const typeLabel = product.type === "digital" ? "Digital" : "Food";
   const typeClass = product.type === "digital" ? "digital" : "food";
+  const name = escapeHtml(product.name);
+  const desc = escapeHtml(product.desc || "");
 
   return `
-  <a href="/produk-detail?id=${product.id}" class="product-card reveal">
+  <a href="/produk-detail?id=${encodeURIComponent(product.id)}" class="product-card reveal">
     <div class="product-thumb">
-      <img src="${img}" alt="${product.name}" loading="lazy" onerror="this.src='${PLACEHOLDER_IMG}'" />
+      <img src="${img}" alt="${name}" loading="lazy" onerror="this.src='${PLACEHOLDER_IMG}'" />
       <span class="product-badge ${typeClass}">${typeLabel}</span>
     </div>
     <div class="product-body">
-      <h3 class="product-name">${product.name}</h3>
-      <p class="product-desc">${product.desc || ""}</p>
+      <h3 class="product-name">${name}</h3>
+      <p class="product-desc">${desc}</p>
       <div class="product-rating">
         ${renderStars(product.ratingAvg)}
         <span class="count">(${product.ratingCount || 0})</span>

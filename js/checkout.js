@@ -45,11 +45,13 @@ async function saveOrder(order) {
     createdAt: firebase.firestore.FieldValue.serverTimestamp(),
   });
 
-  // Naikin hitungan "peminat" produk biar urutan populer kepengaruh.
-  // Gagal di sini gak boleh gagalin keseluruhan order, jadi dipisah try/catch.
+  // Naikin hitungan "peminat" produk lewat server function (bukan
+  // Firestore langsung dari client) biar gak bisa dimanipulasi orang.
   try {
-    await db.collection("products").doc(order.productId).update({
-      orderCount: firebase.firestore.FieldValue.increment(1),
+    await fetch("/api/increment-order-count", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ productId: order.productId }),
     });
   } catch (err) {
     console.error("Gagal update orderCount produk:", err);
