@@ -1,3 +1,22 @@
+// Fallback jaga-jaga kalau utils.js gak ke-load di halaman ini
+if (typeof escapeHtml !== "function") {
+  window.escapeHtml = function (str) {
+    if (str === null || str === undefined) return "";
+    return String(str)
+      .replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;").replaceAll("'", "&#39;");
+  };
+}
+if (typeof isValidImageUrl !== "function") {
+  window.isValidImageUrl = function (url) {
+    if (!url) return true;
+    try {
+      const u = new URL(url);
+      return u.protocol === "https:" && ["raw.githubusercontent.com", "firebasestorage.googleapis.com"].some((h) => u.hostname === h || u.hostname.endsWith("." + h));
+    } catch { return false; }
+  };
+}
+
 // js/admin-orders.js — kelola pesanan di dashboard admin (pending & riwayat)
 // Non-module, pakai `db` global dari firebase-config.js
 
