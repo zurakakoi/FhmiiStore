@@ -1,6 +1,9 @@
 User-agent: *
 Allow: /
 Disallow: /admin/
-Disallow: /api/
+Disallow: /api/verify-pin
+Disallow: /api/store-config
+Disallow: /api/sync-rating
+Disallow: /api/increment-order-count
 
-Sitemap: https://fhmiistore.my.id/sitemap.xml
+Sitemap: https://fhmiistore.my.id/api/sitemap
